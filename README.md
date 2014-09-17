@@ -1,4 +1,4 @@
-# Excon::Middleware::Aws::ExponentialBackoff
+# Excon::Middleware::AWS::ExponentialBackoff
 
 Excon middleware to exponentially backoff calling AWS APIs when throttled or experiencing errors.
 

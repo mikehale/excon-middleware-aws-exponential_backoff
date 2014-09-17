@@ -5,7 +5,7 @@ require 'excon/middleware/aws/exponential_backoff/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "excon-middleware-aws-exponential_backoff"
-  spec.version       = Excon::Middleware::Aws::ExponentialBackoff::VERSION
+  spec.version       = Excon::Middleware::AWS::ExponentialBackoff::VERSION
   spec.authors       = ["Michael Hale"]
   spec.email         = ["mike@hales.ws"]
   spec.summary       = %q{Excon middleware to exponentially backoff calling AWS APIs when throttled or experiencing errors.}
