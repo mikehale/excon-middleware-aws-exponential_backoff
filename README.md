@@ -22,9 +22,7 @@ This gem is intended to be used with fog and excon when communicating with AWS A
 
 ```ruby
 require "fog"
-require "excon/middleware/aws/exponential_backoff"
-
-Excon.defaults[:middlewares] << Excon::Middleware::AWS::ExponentialBackoff
+require "excon/middleware/aws/exponential_backoff/include"
 
 10.times do
   p Fog::DNS::AWS.new(aws_access_key_id: 'key', aws_secret_access_key: 'secret').list_hosted_zones
