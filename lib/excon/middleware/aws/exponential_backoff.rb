@@ -29,8 +29,8 @@ module Excon
         def error_call(datum)
           datum[:backoff] ||= {}
           datum[:backoff][:max_retries] ||= 0
-          datum[:backoff][:max_delay] ||= 30
-          datum[:backoff][:retry_count] = 0
+          datum[:backoff][:max_delay]   ||= 30
+          datum[:backoff][:retry_count] ||= 0
 
           if (throttle?(datum) || server_error?(datum)) && should_retry?(datum)
             do_backoff(datum)
