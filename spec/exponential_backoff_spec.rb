@@ -6,6 +6,12 @@ class Stack
   def response_call(datum); end
 end
 
+class Instrumentor
+  def instrument(msg, datum, &block)
+    block.call if block
+  end
+end
+
 RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
   let(:stack) { Stack.new }
   subject { Excon::Middleware::AWS::ExponentialBackoff.new(stack) }
@@ -68,6 +74,23 @@ RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
     datum = {}
     expect(stack).to receive(:error_call).with(datum)
     subject.do_handoff(datum)
+  end
+
+  it "can be instrumented" do
+    instrumentor = Instrumentor.new
+    datum = {
+             instrumentor: instrumentor,
+             instrumentor_name: "test"
+            }
+
+    expect(instrumentor).to receive(:instrument).with("test.backoff", datum).and_call_original
+    expect_any_instance_of(Kernel).to receive(:sleep)
+    subject.do_sleep(0, datum)
+  end
+
+  it "works when not instrumented" do
+    expect_any_instance_of(Kernel).to receive(:sleep)
+    subject.do_sleep(0, {})
   end
 
   context :do_backoff do
