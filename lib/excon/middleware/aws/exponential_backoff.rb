@@ -22,6 +22,9 @@ module Excon
                                   Excon::Errors::ServiceUnavailable,
                                   Excon::Errors::GatewayTimeout
                                  ]
+        VALID_MIDDLEWARE_KEYS = [
+                                 :backoff
+                                ]
 
         def error_call(datum)
           datum[:backoff] ||= {}
@@ -37,31 +40,33 @@ module Excon
         end
 
         def do_handoff(datum)
-          # @stack.error_call(datum)
+          @stack.error_call(datum)
         end
 
         def do_backoff(datum)
-          # sleep_time = [
-          #               exponential_wait(datum),
-          #               datum[:backoff][:max_delay]
-          #              ].min.round(2)
-
-          # if datum.has_key?(:instrumentor)
-          #   datum[:instrumentor].instrument("#{datum[:instrumentor_name]}.backoff", datum) do
-          #     sleep sleep_time
-          #   end
-          # else
-          #   sleep sleep_time
-          # end
-
-          # datum[:backoff][:retry_count] -= 1
-          # connection = datum.delete(:connection)
-          # datum.reject! { |key, _| !Excon::VALID_REQUEST_KEYS.include?(key)  }
-          # connection.request(datum)
+          do_sleep(sleep_time(datum), datum)
+          datum[:backoff][:retry_count] += 1
+          connection = datum.delete(:connection)
+          datum.reject! { |key, _| !(Excon::VALID_REQUEST_KEYS + VALID_MIDDLEWARE_KEYS).include?(key)  }
+          connection.request(datum)
         end
 
-        def exponential_wait(datum)
-          (2 ** datum[:backoff][:retry_count] + rand(0.0)) * SLEEP_FACTOR
+        def do_sleep(sleep_time, datum)
+          if datum.has_key?(:instrumentor)
+            datum[:instrumentor].instrument("#{datum[:instrumentor_name]}.backoff", datum) do
+              sleep sleep_time
+            end
+          else
+            sleep sleep_time
+          end
+        end
+
+        def sleep_time(datum)
+          exponential_wait = (2 ** datum[:backoff][:retry_count] + rand(0.0)) * SLEEP_FACTOR
+          [
+           exponential_wait, 
+           datum[:backoff][:max_delay]
+          ].min.round(2)
         end
 
         def should_retry?(datum)

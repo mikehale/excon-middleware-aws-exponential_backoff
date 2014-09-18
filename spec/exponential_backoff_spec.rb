@@ -7,17 +7,22 @@ class Stack
 end
 
 RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
-  subject { described_class.new(Stack.new) }
+  let(:stack) { Stack.new }
+  subject { Excon::Middleware::AWS::ExponentialBackoff.new(stack) }
 
   it { is_expected.to respond_to :error_call }
 
   it "delays exponentially longer" do
-    wait1 = subject.exponential_wait(backoff: {retry_count: 0 })
-    wait2 = subject.exponential_wait(backoff: {retry_count: 1 })
-    wait3 = subject.exponential_wait(backoff: {retry_count: 2 })
+    wait1 = subject.sleep_time(backoff: {max_delay: 10, retry_count: 0 })
+    wait2 = subject.sleep_time(backoff: {max_delay: 10, retry_count: 1 })
+    wait3 = subject.sleep_time(backoff: {max_delay: 10, retry_count: 2 })
     expect(wait3).to be > wait2
     expect(wait2).to be > wait1
     expect(wait1).to be > 0
+  end
+
+  it "should not exceed max_delay" do
+    expect(subject.sleep_time(backoff: {max_delay: 1, retry_count: 10 })).to be 1.0
   end
 
   it "always retries if max_retries is 0" do
@@ -59,6 +64,43 @@ RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
     subject.error_call(error: bad_request)
   end
 
-  pending "test do_backoff into existance"
-  pending "test do_handoff into existance"
+  it "hands off correctly" do
+    datum = {}
+    expect(stack).to receive(:error_call).with(datum)
+    subject.do_handoff(datum)
+  end
+
+  context :do_backoff do
+    let(:connection) { double("connection") }
+    let(:datum) {
+      {
+       backoff: {
+                 retry_count: 1,
+                 max_delay: 10
+                },
+       connection: connection
+      }
+    }
+
+    before do
+      allow(connection).to receive(:request)
+      allow(subject).to receive(:do_sleep)
+    end
+
+    it "increments the request_count" do
+      subject.do_backoff(datum)
+      expect(datum[:backoff][:retry_count]).to be 2
+    end
+
+    it "restarts request call with a reset connection" do
+      expect(connection).to receive(:request).with({backoff: {max_delay: 10, retry_count: 2}})
+      subject.do_backoff(datum.merge(ignored_stuff: :foo))
+    end
+
+    it "sleeps for the specified time" do
+      allow(subject).to receive(:sleep_time) { 1.1 }
+      expect(subject).to receive(:do_sleep).with(1.1, datum)
+      subject.do_backoff(datum)
+    end
+  end
 end
