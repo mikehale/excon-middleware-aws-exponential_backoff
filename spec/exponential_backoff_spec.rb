@@ -7,8 +7,9 @@ class Stack
 end
 
 class Instrumentor
-  def instrument(msg, datum, &block)
-    block.call if block
+  def instrument(name, datum, &block)
+    return unless block
+    block.call
   end
 end
 
@@ -124,6 +125,27 @@ RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
       allow(subject).to receive(:sleep_time) { 1.1 }
       expect(subject).to receive(:do_sleep).with(1.1, datum)
       subject.do_backoff(datum)
+    end
+  end
+
+  it "should work against a real server" do
+    Excon.defaults[:mock] = false
+    Excon.defaults[:middlewares] << Excon::Middleware::AWS::ExponentialBackoff
+
+    datum = {
+             instrumentor: Instrumentor.new,
+             instrumentor_name: "test",
+             expects: [200],
+             backoff: {
+                       max_retries: 3,
+                       max_delay: 0
+                      }
+            }
+
+    allow(Excon).to receive(:display_warning) # keep rspec output tidy even with unsupported request key :backoff
+
+    ServerHelper.with_server("aws") do
+      expect(Excon.get('http://127.0.0.1:9292/throttle/3', datum).body).to eq "OK"
     end
   end
 end
