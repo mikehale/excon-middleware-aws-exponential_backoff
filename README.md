@@ -36,3 +36,8 @@ end
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
+
+## Inspiration
+
+* http://docs.aws.amazon.com/general/latest/gr/api-retries.html
+* https://github.com/aws/aws-sdk-ruby/blob/master/lib/aws/core/client.rb
