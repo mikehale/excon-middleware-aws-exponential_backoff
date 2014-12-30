@@ -15,7 +15,7 @@ module Excon
                                    RequestThrottled
                                    RequestLimitExceeded
                                    BandwidthLimitExceeded
-        ]
+                                 ]
         SERVER_ERROR_CLASSES   = [
                                   Excon::Errors::InternalServerError,
                                   Excon::Errors::BadGateway,
