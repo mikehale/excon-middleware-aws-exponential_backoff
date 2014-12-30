@@ -26,6 +26,15 @@ module Excon
                                  :backoff
                                 ]
 
+        def self.append_valid_request_keys
+          new_value = (Excon::VALID_REQUEST_KEYS + VALID_MIDDLEWARE_KEYS).uniq
+          Excon.send(:remove_const, "VALID_REQUEST_KEYS")
+          Excon.const_set("VALID_REQUEST_KEYS", new_value)
+        end
+
+        # Call method during class definition
+        append_valid_request_keys
+
         def error_call(datum)
           datum[:backoff] ||= {}
           datum[:backoff][:max_retries] ||= 0
@@ -47,7 +56,7 @@ module Excon
           do_sleep(sleep_time(datum), datum)
           datum[:backoff][:retry_count] += 1
           connection = datum.delete(:connection)
-          datum.reject! { |key, _| !(Excon::VALID_REQUEST_KEYS + VALID_MIDDLEWARE_KEYS).include?(key)  }
+          datum.reject! { |key, _| !(Excon::VALID_REQUEST_KEYS).include?(key)  }
           connection.request(datum)
         end
 
@@ -78,8 +87,6 @@ module Excon
         def throttle?(datum)
           datum[:error].kind_of?(Excon::Errors::BadRequest) &&
             THROTTLING_ERROR_CODES.include?(extract_error_code(datum[:error].response.body))
-
-
         end
 
         def server_error?(datum)

@@ -148,4 +148,8 @@ RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
       expect(Excon.get('http://127.0.0.1:9292/throttle/3', datum).body).to eq "OK"
     end
   end
+
+  it "should include :backoff in Excon::VALID_REQUEST_KEYS" do
+    expect(Excon::VALID_REQUEST_KEYS).to include(:backoff)
+  end
 end
