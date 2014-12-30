@@ -142,8 +142,6 @@ RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
                       }
             }
 
-    allow(Excon).to receive(:display_warning) # keep rspec output tidy even with unsupported request key :backoff
-
     ServerHelper.with_server("aws") do
       expect(Excon.get('http://127.0.0.1:9292/throttle/3', datum).body).to eq "OK"
     end
@@ -151,5 +149,9 @@ RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
 
   it "should include :backoff in Excon::VALID_REQUEST_KEYS" do
     expect(Excon::VALID_REQUEST_KEYS).to include(:backoff)
+  end
+
+  it "should include :backoff in Excon::VALID_CONNECTION_KEYS" do
+    expect(Excon::VALID_CONNECTION_KEYS).to include(:backoff)
   end
 end

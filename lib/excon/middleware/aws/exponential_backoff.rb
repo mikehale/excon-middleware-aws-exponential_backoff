@@ -26,14 +26,15 @@ module Excon
                                  :backoff
                                 ]
 
-        def self.append_valid_request_keys
-          new_value = (Excon::VALID_REQUEST_KEYS + VALID_MIDDLEWARE_KEYS).uniq
-          Excon.send(:remove_const, "VALID_REQUEST_KEYS")
-          Excon.const_set("VALID_REQUEST_KEYS", new_value)
+        def self.append_keys(const_name, keys)
+          new_value = (Excon.const_get(const_name) + keys).uniq
+          Excon.send(:remove_const, const_name)
+          Excon.const_set(const_name, new_value)
         end
 
-        # Call method during class definition
-        append_valid_request_keys
+        # Call methods during class definition
+        append_keys("VALID_REQUEST_KEYS", VALID_MIDDLEWARE_KEYS)
+        append_keys("VALID_CONNECTION_KEYS", VALID_MIDDLEWARE_KEYS)
 
         def error_call(datum)
           datum[:backoff] ||= {}
