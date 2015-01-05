@@ -79,9 +79,13 @@ RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
 
   it "can be instrumented" do
     instrumentor = Instrumentor.new
+    error = instance_double("HTTPStatusError")
+    allow(error).to receive(:response) { "The Response" }
+
     datum = {
              instrumentor: instrumentor,
-             instrumentor_name: "test"
+             instrumentor_name: "test",
+             error: error
             }
 
     expect(instrumentor).to receive(:instrument).with("test.backoff", datum).and_call_original
@@ -90,8 +94,11 @@ RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
   end
 
   it "works when not instrumented" do
+    error = instance_double("HTTPStatusError")
+    allow(error).to receive(:response) { "The Response" }
+
     expect_any_instance_of(Kernel).to receive(:sleep)
-    subject.do_sleep(0, {})
+    subject.do_sleep(0, { error: error })
   end
 
   context :do_backoff do

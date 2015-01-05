@@ -36,6 +36,16 @@ module Excon
         append_keys("VALID_REQUEST_KEYS", VALID_MIDDLEWARE_KEYS)
         append_keys("VALID_CONNECTION_KEYS", VALID_MIDDLEWARE_KEYS)
 
+        def request_call(datum)
+          datum[:backoff] ||= {}
+          super
+        end
+
+        def response_call(datum)
+          datum[:backoff] ||= {}
+          super
+        end
+
         def error_call(datum)
           datum[:backoff] ||= {}
           datum[:backoff][:max_retries] ||= 0
@@ -65,9 +75,11 @@ module Excon
           if datum.has_key?(:instrumentor)
             datum[:instrumentor].instrument("#{datum[:instrumentor_name]}.backoff", datum) do
               sleep sleep_time
+              datum[:error].response
             end
           else
             sleep sleep_time
+            datum[:error].response
           end
         end
 
