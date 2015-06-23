@@ -17,6 +17,14 @@ RSpec.describe Excon::Middleware::AWS::ExponentialBackoff do
   let(:stack) { Stack.new }
   subject { Excon::Middleware::AWS::ExponentialBackoff.new(stack) }
 
+  it "detects errors in json responses" do
+    expect(subject.extract_error_code('{"__type":"ProvisionedThroughputExceededException","message":"Rate exceeded"')).to eq "ProvisionedThroughputExceededException"
+  end
+
+  it "detects errors in xml responses" do
+    expect(subject.extract_error_code('<Code>ProvisionedThroughputExceededException</Code>')).to eq "ProvisionedThroughputExceededException"
+  end
+
   it { is_expected.to respond_to :error_call }
 
   it "delays exponentially longer" do

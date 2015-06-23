@@ -7,7 +7,7 @@ module Excon
       class ExponentialBackoff < Excon::Middleware::Base
         MILLISECOND            = 1.0/1000
         SLEEP_FACTOR           = MILLISECOND * 100
-        ERROR_CODE_REGEX       = Regexp.new(/<Code>([^<]+)<\/Code>/mi)
+        ERROR_CODE_REGEX       = [Regexp.new(/<Code>([^<]+)<\/Code>/mi), Regexp.new(/"__type":"([^"]+)/mi)]
         THROTTLING_ERROR_CODES = %w[
                                    Throttling
                                    ThrottlingException
@@ -17,14 +17,14 @@ module Excon
                                    BandwidthLimitExceeded
                                  ]
         SERVER_ERROR_CLASSES   = [
-                                  Excon::Errors::InternalServerError,
-                                  Excon::Errors::BadGateway,
-                                  Excon::Errors::ServiceUnavailable,
-                                  Excon::Errors::GatewayTimeout
-                                 ]
+          Excon::Errors::InternalServerError,
+          Excon::Errors::BadGateway,
+          Excon::Errors::ServiceUnavailable,
+          Excon::Errors::GatewayTimeout
+        ]
         VALID_MIDDLEWARE_KEYS = [
-                                 :backoff
-                                ]
+          :backoff
+        ]
 
         def self.append_keys(const_name, keys)
           new_value = (Excon.const_get(const_name) + keys).uniq
@@ -86,8 +86,8 @@ module Excon
         def sleep_time(datum)
           exponential_wait = (2 ** datum[:backoff][:retry_count] + rand(0.0)) * SLEEP_FACTOR
           [
-           exponential_wait, 
-           datum[:backoff][:max_delay]
+            exponential_wait,
+            datum[:backoff][:max_delay]
           ].min.round(2)
         end
 
@@ -107,10 +107,15 @@ module Excon
         end
 
         def extract_error_code(body)
-          match = ERROR_CODE_REGEX.match(body)
-          if match && code = match[1]
-            code.strip if code
-          end
+          ERROR_CODE_REGEX.each{|regex|
+            match = regex.match(body)
+            if match && code = match[1]
+              if code
+                return code.strip
+              end
+            end
+          }
+          nil
         end
       end
     end
