@@ -60,7 +60,7 @@ module Excon
         Excon.defaults[:backoff] = defaults
 
         def request_call(datum)
-          datum[:backoff] ||= {}
+          datum[:backoff] = (datum[:backoff] ||= {}).dup
           datum[:backoff][:error_code] = nil
           datum[:backoff][:error_message] = nil
           datum[:backoff][:original_request_start] ||= Time.now
