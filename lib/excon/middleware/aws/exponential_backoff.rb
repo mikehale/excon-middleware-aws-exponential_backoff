@@ -93,11 +93,9 @@ module Excon
           if datum.has_key?(:instrumentor)
             datum[:instrumentor].instrument("#{datum[:instrumentor_name]}.backoff", datum) do
               sleep sleep_time
-              datum[:error].response
             end
           else
             sleep sleep_time
-            datum[:error].response
           end
         end
 
