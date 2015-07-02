@@ -20,12 +20,9 @@ module Excon
                                    RequestLimitExceeded
                                    BandwidthLimitExceeded
                                  ]
-        # TODO: include socket errors, and all 500s
         SERVER_ERROR_CLASSES   = [
-                                  Excon::Errors::InternalServerError,
-                                  Excon::Errors::BadGateway,
-                                  Excon::Errors::ServiceUnavailable,
-                                  Excon::Errors::GatewayTimeout
+                                  Excon::Errors::ServerError,
+                                  Excon::Errors::SocketError,
                                  ]
         VALID_MIDDLEWARE_KEYS =  [
                                   :backoff
